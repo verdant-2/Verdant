@@ -1,13 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <h1>hold up im loading</h1>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hold up im loading</title>
+    <!-- Your provided scripts for the Ultraviolet proxy -->
     <script src="uv/uv.bundle.js" defer></script>
     <script src="uv/uv.config.js" defer></script>
     <script src="register-sw.js" defer></script>
-    <script src="embed.js" defer></script>
+    
+    <style>
+        /* A simple style for the loading message */
+        body {
+            background-color: #1f2937;
+            color: #d1d5db;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2rem;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <h1>hold up im loading</h1>
+
+    <!-- The embed.js script to handle the URL and proxying -->
+    <script>
+        // This is a direct implementation of embed.js to keep the file self-contained.
+        // It waits for the Ultraviolet bundle to be ready, then encodes the URL.
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlToLoad = urlParams.get('url');
+
+            // Wait for the Ultraviolet Service Worker to be registered
+            if (window.registerUV) {
+                window.registerUV().then(() => {
+                    // Once the service worker is active, we can encode the URL
+                    try {
+                        if (urlToLoad) {
+                            // Get the UV configuration to use the Bare server
+                            const bareServer = window.__uv$config.bare;
+                            
+                            // Create a new Ultraviolet instance
+                            const uv = new window.UVClient(bareServer);
+                            
+                            // Encode the URL using the UV instance
+                            const proxiedUrl = uv.encode(urlToLoad);
+                            
+                            // Redirect the window to the new proxied URL
+                            window.location.href = window.__uv$config.prefix + proxiedUrl;
+                        } else {
+                            document.querySelector('h1').textContent = 'Error: No URL provided.';
+                        }
+                    } catch (e) {
+                        console.error('Failed to encode URL:', e);
+                        document.querySelector('h1').textContent = 'Error: Failed to process URL.';
+                    }
+                });
+            } else {
+                document.querySelector('h1').textContent = 'Error: Ultraviolet bundle not ready.';
+            }
+        });
+    </script>
 </body>
-
-
 </html>
+
