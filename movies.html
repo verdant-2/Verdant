@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verdant</title>
+    <link rel="icon" href="https://ik.imagekit.io/7krb4a8ap/76deab65-6483-4a91-8645-48ba0a4d5e82-removebg-preview.png" sizes="144x144">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-color: #171717;
+            color: #e5e5e5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .iframe-container {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            flex-grow: 1;
+            transition: height 0.5s ease-in-out, max-width 0.5s ease-in-out, margin 0.5s ease-in-out, border-radius 0.3s ease-in-out;
+            border: 1px solid #065f46;
+        }
+
+        @media (min-width: 768px) {
+            .iframe-container {
+                height: calc(100vh - 6rem - 6rem - 4rem);
+            }
+        }
+
+        body.proxy-active .main-content-wrapper,
+        body.proxy-active .footer-container {
+            display: none;
+        }
+
+        body.proxy-active main {
+            justify-content: flex-start;
+            align-items: stretch;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        body.proxy-active #control-bar {
+            width: 100%;
+            max-width: none;
+            height: 3rem;
+            padding: 0.5rem;
+            transition: height 0.3s ease-in-out, border-radius 0.3s ease-in-out, width 0.3s ease-in-out, margin 0.3s ease-in-out;
+            overflow: hidden;
+            margin-top: 0;
+            flex-shrink: 0;
+            border-radius: 0;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+            border-bottom-left-radius: 0.75rem;
+            border-bottom-right-radius: 0.75rem;
+            border-top-width: 1px;
+            border-bottom-width: 1px;
+        }
+
+        body.proxy-active #control-bar.minimized {
+            height: 2rem;
+            border-radius: 0.75rem;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: 1rem;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+            border-top-width: 1px;
+            border-bottom-width: 1px;
+        }
+
+        body.proxy-active #control-bar.minimized #url-bar-input,
+        body.proxy-active #control-bar.minimized #go-button {
+            display: none;
+        }
+
+        body.proxy-active .iframe-container {
+            flex-grow: 1;
+            width: 100%;
+            max-width: none;
+            border-radius: 0;
+            margin-top: 0;
+            margin-bottom: 0;
+            border-top-left-radius: 0.75rem;
+            border-top-right-radius: 0.75rem;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            border-top-width: 1px;
+            border-bottom-width: 0;
+        }
+
+        .iframe-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: #000;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            border-radius: 0.75rem;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 10;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-neutral-900 text-neutral-200 flex flex-col min-h-screen">
+
+    <header class="p-4 md:p-6 flex justify-between items-center border-b border-neutral-700">
+        <a href="index.html" id="home-link" class="text-lg md:text-xl font-bold text-emerald-300 hover:text-emerald-400 transition-colors duration-200">
+            Verdant
+        </a>
+        <nav>
+            <ul class="flex space-x-4 md:space-x-8 text-neutral-300 text-sm md:text-base">
+                <li><a href="games.html" class="hover:text-emerald-400 transition-colors duration-200">Games</a></li>
+                <li><a href="apps.html" class="hover:text-emerald-400 transition-colors duration-200">Apps</a></li>
+                <li><a href="movies.html" class="text-emerald-400 font-semibold transition-colors duration-200">Movies</a></li>
+                <li><a href="ai.html" class="hover:text-emerald-400 transition-colors duration-200">AI Chat</a></li>
+                <li><a href="settings.html" class="hover:text-emerald-400 transition-colors duration-200">Settings</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="flex-grow flex flex-col items-center justify-center p-6">
+        <div class="main-content-wrapper flex flex-col items-center justify-center w-full">
+            <h1 class="text-5xl md:text-6xl font-bold text-emerald-200 mb-10 tracking-tighter text-center">
+                Movies
+            </h1>
+            <p class="text-neutral-300 text-lg md:text-xl mb-12 max-w-2xl text-center leading-relaxed">
+                Click the button to launch movies.
+            </p>
+
+            <button id="launch-movies-button" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg
+                       transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-emerald-300 text-xl">
+                Launch Movies
+            </button>
+        </div>
+
+        <div id="proxy-content-area" class="iframe-container hidden">
+            <div id="loading-overlay" class="loading-overlay">
+                <div class="spinner"></div>
+                <p>Loading content via proxy...</p>
+            </div>
+        </div>
+
+        <div id="control-bar" class="hidden w-full p-2 bg-neutral-800 border border-emerald-600 flex items-center justify-between gap-2 z-20">
+            <button id="back-button" class="p-2 rounded-md hover:bg-neutral-700 text-emerald-400" title="Go Back">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                </svg>
+            </button>
+            <button id="forward-button" class="p-2 rounded-md hover:bg-neutral-700 text-emerald-400" title="Go Forward">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                </svg>
+            </button>
+            <button id="refresh-button" class="p-2 rounded-md hover:bg-neutral-700 text-emerald-400" title="Refresh Page">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348A8.486 8.486 0 0 0 7.5 12c0 4.198 3.379 7.625 7.5 7.625S22.5 16.198 22.5 12a8.486 8.486 0 0 0-7.5-2.652m0 0-.94.313M15 12.75V15m-.484-1.25.023-.001C14.075 12.19 13.9 12 13.75 12h-.875c-.21 0-.414.12-.519.313M2.75 12.75h-.008A2.625 2.625 0 0 1 5.375 10.5m-1.25 1.5 2.5-2.5m1.5-2.5 2.5 2.5" />
+                </svg>
+            </button>
+            <input type="text" id="url-bar-input" placeholder="Current URL" class="flex-grow py-1 px-3 bg-neutral-700 border border-emerald-600 rounded-md text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-emerald-500" title="Current URL / Enter new URL">
+            <button id="go-button" class="p-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white" title="Go to URL">Go</button>
+            <button id="minimize-button" class="p-2 rounded-md hover:bg-neutral-700 text-emerald-400" title="Minimize Control Bar">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6" />
+                </svg>
+            </button>
+        </div>
+    </main>
+
+    <footer class="footer-container p-4 md:p-6 flex justify-between items-center text-xs md:text-sm text-neutral-400 border-t border-neutral-700 mt-auto">
+        <div class="flex items-center">
+            &copy; 2025 Verdant
+        </div>
+        <div class="space-x-4 md:space-x-8">
+            <a href="partners.html" class="hover:text-emerald-400 transition-colors duration-200">Partners</a>
+            <a href="https://discord.gg/fwXJpGdBHd" class="hover:text-emerald-400 transition-colors duration-200">Discord</a>
+            <a href="https://forms.gle/mnPMkYqdD2cxT5F49" class="hover:text-emerald-400 transition-colors duration-200">Feedback</a>
+        </div>
+    </footer>
+
+    <script>
+        function encodeBase64(str) {
+            try {
+                return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+                    function toSolidBytes(match, p1) {
+                        return String.fromCharCode('0x' + p1);
+                    }));
+            } catch (e) {
+                console.error("Base64 encoding failed:", e);
+                return btoa(str);
+            }
+        }
+
+        function decodeBase64(str) {
+            try {
+                return decodeURIComponent(atob(str).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+            } catch (e) {
+                console.error("Base64 decoding failed:", e);
+                return null;
+            }
+        }
+
+        async function proxyLoad(url, frame, loadingOverlay) {
+            if (loadingOverlay) loadingOverlay.style.display = 'flex';
+
+            let actualTargetUrl = url;
+            const verdantProxyPrefix = window.location.origin + '/route/';
+
+            if (url.startsWith(verdantProxyPrefix)) {
+                const encodedPart = url.substring(verdantProxyPrefix.length);
+                const decodedUrl = decodeBase64(encodedPart);
+                if (decodedUrl) {
+                    actualTargetUrl = decodedUrl;
+                    console.log(`Detected Verdant proxy URL. Decoded to: ${actualTargetUrl}`);
+                } else {
+                    console.warn(`Could not decode Verdant proxy URL. Falling back to original input: ${url}`);
+                    actualTargetUrl = url;
+                }
+            } else {
+                actualTargetUrl = actualTargetUrl.replace(/^(https?:\/\/)?/, '');
+            }
+
+
+            const urlToFetch = actualTargetUrl.includes('.')
+                ? `https://${actualTargetUrl}`
+                : `https://html.duckduckgo.com/html?q=${encodeURIComponent(actualTargetUrl)}`;
+
+            const proxyChain = [
+                "https://corsproxy.io/?",
+                "https://api.allorigins.win/raw?url=",
+                "https://proxy.cors.sh/",
+                "https://yacdn.com/proxy/",
+                "https://api.codetabs.com/v1/proxy/?quest=",
+                "https://cors.eu.org/",
+                "https://cors.io/?",
+                "https://api.proxied.host/",
+                "https://crossorigin.me/",
+                "https://web.archive.org/web/",
+                "https://thingproxy.freeboard.io/fetch/",
+                "https://toothpaste.bekekes390.workers.dev/?url=",
+            ];
+
+            let response = null;
+            let lastError = "Unknown error, no proxy successfully fetched the content.";
+
+            for (let i = 0; i < proxyChain.length; i++) {
+                const currentProxyBase = proxyChain[i];
+                let currentProxyUrl = currentProxyBase + encodeURIComponent(urlToFetch);
+
+                console.log(`Attempting to fetch with proxy ${i + 1}: ${currentProxyUrl}`);
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+                    response = await fetch(currentProxyUrl, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+
+                    if (response.ok) {
+                        console.log(`Successfully fetched using proxy ${i + 1}.`);
+                        break;
+                    } else {
+                        lastError = `Proxy ${i + 1} failed with status ${response.status} ${response.statusText}.`;
+                        console.warn(lastError);
+                    }
+                } catch (e) {
+                    if (e.name === 'AbortError') {
+                        lastError = `Proxy ${i + 1} request timed out.`;
+                    } else {
+                        lastError = `Proxy ${i + 1} threw an error: ${e.message}.`;
+                    }
+                    console.error(lastError);
+                }
+            }
+
+            if (!response || !response.ok) {
+                throw new Error(`Failed to load content. All proxy attempts failed. Last detailed error: ${lastError}`);
+            }
+
+            try {
+                const html = await response.text();
+                const baseUrl = new URL(urlToFetch).origin;
+
+                const processed = html
+                    .replace(/<head>/i, `<head><base href="${baseUrl}/">`)
+                    .replace(/<body([^>]*)>/i, `<body$1 style="margin:0;">`);
+
+                const blob = new Blob([processed], { type: 'text/html' });
+                const blobUrl = URL.createObjectURL(blob);
+
+                console.log('Blob URL ready:', blobUrl);
+
+                frame.src = blobUrl;
+
+                updateUrlBar(actualTargetUrl);
+
+                frame.onload = () => {
+                    console.log('Frame loaded!');
+                    if (loadingOverlay) loadingOverlay.style.display = 'none';
+
+                    try {
+                        const iframeDoc = frame.contentDocument;
+                        if (iframeDoc && iframeDoc.body) {
+                            iframeDoc.body.addEventListener('click', (e) => {
+                                let targetElement = e.target;
+                                let urlToRedirect = '';
+                                let isHandled = false;
+
+                                while (targetElement && targetElement !== iframeDoc.body) {
+                                    if (targetElement.tagName === 'A' && targetElement.href) {
+                                        urlToRedirect = targetElement.href;
+                                        isHandled = true;
+                                        break;
+                                    }
+                                    if (targetElement.onclick || targetElement.hasAttribute('data-href') || targetElement.hasAttribute('data-url')) {
+                                        urlToRedirect = targetElement.getAttribute('data-href') || targetElement.getAttribute('data-url') || '';
+                                        if (!urlToRedirect && targetElement.onclick) {
+                                            const onclickString = targetElement.onclick.toString();
+                                            const match = /(?:location\.href|window\.location|location\.assign|window\.open)\s*=\s*['"]([^'"]+)['"]/.exec(onclickString);
+                                            if (match && match[1]) {
+                                                urlToRedirect = match[1];
+                                            }
+                                        }
+                                        if (urlToRedirect) {
+                                            isHandled = true;
+                                            break;
+                                        }
+                                    }
+                                    targetElement = targetElement.parentElement;
+                                }
+
+                                if (isHandled && urlToRedirect) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+
+                                    try {
+                                        const absoluteUrl = new URL(urlToRedirect, new URL(frame.srcdoc ? frame.src : frame.src).origin).href;
+                                        console.log(`Intercepted navigation to: ${absoluteUrl}`);
+                                        proxyLoad(absoluteUrl, frame, loadingOverlay);
+                                    } catch (urlError) {
+                                        console.warn("Invalid URL for interception, attempting fallback:", urlToRedirect, urlError);
+                                        proxyLoad(urlToRedirect, frame, loadingOverlay);
+                                    }
+                                }
+                            }, true);
+                        }
+                    } catch (e) {
+                        console.warn('Frame access error (expected for cross-origin iframes when intercepting links):', e);
+                        console.warn('Internal navigation on some sites might not work automatically due to security restrictions.');
+                    }
+                };
+            } catch (error) {
+                console.error('Browser Error (during HTML processing/blob creation):', error);
+                frame.srcdoc = `
+                    <div style="color:white;text-align:center;font-size:20px;font-family:sans-serif;padding:50px;background-color:#333;">
+                        Error: Failed to load content.<br><br>
+                        This might be due to a proxy issue, or the target website being inaccessible.
+                        Please try a different URL or try again later.
+                        <br><br>
+                        Tip: For complex sites, internal links might not work automatically. Try copying the full URL and pasting it into the bar above.
+                    </div>
+                `;
+                if (loadingOverlay) loadingOverlay.style.display = 'none';
+                updateUrlBar('');
+            }
+        }
+
+        const homeLink = document.getElementById('home-link');
+        const launchMoviesButton = document.getElementById('launch-movies-button');
+        const proxyContentArea = document.getElementById('proxy-content-area');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const mainContentWrapper = document.querySelector('.main-content-wrapper');
+        const footerContainer = document.querySelector('.footer-container');
+
+        const controlBar = document.getElementById('control-bar');
+        const backButton = document.getElementById('back-button');
+        const forwardButton = document.getElementById('forward-button');
+        const refreshButton = document.getElementById('refresh-button');
+        const urlBarInput = document.getElementById('url-bar-input');
+        const goButton = document.getElementById('go-button');
+        const minimizeButton = document.getElementById('minimize-button');
+
+        function updateUrlBar(actualLoadedUrl) {
+            const verdantProxyPrefix = window.location.origin + '/route/';
+            const encodedUrl = encodeBase64(actualLoadedUrl);
+            urlBarInput.value = verdantProxyPrefix + encodedUrl;
+        }
+
+        function toggleMinimize() {
+            controlBar.classList.toggle('minimized');
+            if (controlBar.classList.contains('minimized')) {
+                minimizeButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                `;
+                minimizeButton.title = "Maximize Control Bar";
+            } else {
+                minimizeButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6" />
+                    </svg>
+                `;
+                minimizeButton.title = "Minimize Control Bar";
+            }
+        }
+
+        function resetHomePage() {
+            document.body.classList.remove('proxy-active');
+            proxyContentArea.classList.add('hidden');
+            controlBar.classList.add('hidden');
+            updateUrlBar('');
+
+            mainContentWrapper.style.display = 'flex';
+            footerContainer.style.display = 'flex';
+
+            controlBar.classList.remove('minimized');
+            minimizeButton.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6" />
+                </svg>
+            `;
+            minimizeButton.title = "Minimize Control Bar";
+        }
+
+        homeLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.assign(window.location.origin + '/index.html');
+        });
+
+        launchMoviesButton.addEventListener('click', () => {
+            const movieUrl = "https://bflixz.org/home/";
+            activateProxyView(movieUrl);
+        });
+
+        function activateProxyView(url) {
+            mainContentWrapper.style.display = 'none';
+            footerContainer.style.display = 'none';
+
+            proxyContentArea.classList.remove('hidden');
+            controlBar.classList.remove('hidden');
+            document.body.classList.add('proxy-active');
+
+            let iframe = document.getElementById('proxy-iframe');
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.id = 'proxy-iframe';
+                proxyContentArea.appendChild(iframe);
+            }
+            proxyLoad(url, iframe, loadingOverlay);
+        }
+
+        backButton.addEventListener('click', () => {
+            const iframe = document.getElementById('proxy-iframe');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.history.back();
+            }
+        });
+
+        forwardButton.addEventListener('click', () => {
+            const iframe = document.getElementById('proxy-iframe');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.history.forward();
+            }
+        });
+
+        refreshButton.addEventListener('click', () => {
+            const iframe = document.getElementById('proxy-iframe');
+            if (iframe) {
+                const currentSrc = iframe.src;
+                iframe.src = 'about:blank';
+                setTimeout(() => {
+                    iframe.src = currentSrc;
+                }, 10);
+            }
+        });
+
+        goButton.addEventListener('click', () => {
+            const url = urlBarInput.value.trim();
+            if (url) {
+                const iframe = document.getElementById('proxy-iframe');
+                if (!iframe) {
+                    console.error("Iframe not found when trying to navigate with Go button.");
+                    return;
+                }
+                proxyLoad(url, iframe, loadingOverlay);
+            }
+        });
+
+        minimizeButton.addEventListener('click', toggleMinimize);
+    </script>
+    <div id="message-box-overlay" class="message-box-overlay hidden">
+        <div class="message-box-content">
+            <p id="message-box-text"></p>
+            <button id="message-box-ok">OK</button>
+        </div>
+    </div>
+
+    <script>
+        function showMessageBox(message) {
+            const messageBoxOverlay = document.getElementById('message-box-overlay');
+            const messageBoxText = document.getElementById('message-box-text');
+            const messageBoxOkButton = document.getElementById('message-box-ok');
+
+            if (!messageBoxOverlay || !messageBoxText || !messageBoxOkButton) {
+                console.error("Message box elements not found. Please ensure #message-box-overlay, #message-box-text, and #message-box-ok exist in your HTML if you want messages to display.");
+                return;
+            }
+
+            messageBoxText.textContent = message;
+            messageBoxOverlay.classList.remove('hidden');
+
+            const hideMessageBox = () => {
+                messageBoxOverlay.classList.add('hidden');
+                messageBoxOkButton.removeEventListener('click', hideMessageBox);
+            };
+
+            messageBoxOkButton.addEventListener('click', hideMessageBox);
+        }
+
+        function launchSiteInAboutBlank() {
+            const siteURL = window.location.origin + '/index.html';
+            const newTab = window.open('about:blank', '_blank');
+
+            if (newTab) {
+                newTab.opener = null;
+                const content = `
+                    <html>
+                    <head>
+                        <title>about:blank</title>
+                        <style>
+                            body { margin:0; padding:0; overflow:hidden; }
+                            iframe { border:none; width:100vw; height:100vh; }
+                        </style>
+                    </head>
+                    <body>
+                        <iframe src="${siteURL}"></iframe>
+                    </body>
+                    </html>`;
+                newTab.document.write(content);
+                newTab.document.close();
+            } else {
+                showMessageBox("Please allow pop-ups for this site to launch in about:blank.");
+                console.error("Pop-up blocked: Unable to launch in about:blank.");
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const launchBlankButton = document.getElementById('launch-blank-button');
+            const homeLink = document.getElementById('home-link');
+            const panicKeyInput = document.getElementById('panic-key-input');
+            const redirectUrlInput = document.getElementById('redirect-url-input');
+            const togglePanicKeyButton = document.getElementById('toggle-panic-key-button');
+            const panicKeyStatus = document.getElementById('panic-key-status');
+
+            let storedPanicKey = localStorage.getItem('verdantPanicKey') || '';
+            let storedRedirectUrl = localStorage.getItem('verdantRedirectUrl') || 'https://google.com';
+            let isPanicKeyEnabled = (localStorage.getItem('verdantPanicKeyEnabled') === 'true');
+
+            function updatePanicKeyStatus() {
+                if (panicKeyStatus) {
+                    if (isPanicKeyEnabled) {
+                        panicKeyStatus.textContent = `Panic Key: Enabled (Key: '${storedPanicKey || 'Not Set'}', Redirect: '${storedRedirectUrl}')`;
+                        panicKeyStatus.classList.remove('text-red-400');
+                        panicKeyStatus.classList.add('text-emerald-400');
+                    } else {
+                        panicKeyStatus.textContent = `Panic Key: Disabled`;
+                        panicKeyStatus.classList.remove('text-emerald-400');
+                        panicKeyStatus.classList.add('text-red-400');
+                    }
+                }
+            }
+
+            if (panicKeyInput) {
+                panicKeyInput.value = storedPanicKey;
+                panicKeyInput.addEventListener('keydown', (e) => {
+                    e.preventDefault();
+                    panicKeyInput.value = e.key;
+                    storedPanicKey = e.key;
+                    showMessageBox(`Panic key set to: '${e.key}'`);
+                });
+            }
+            if (redirectUrlInput) {
+                redirectUrlInput.value = storedRedirectUrl;
+            }
+            updatePanicKeyStatus();
+
+            if (togglePanicKeyButton) {
+                togglePanicKeyButton.addEventListener('click', () => {
+                    storedPanicKey = panicKeyInput ? panicKeyInput.value.trim() : localStorage.getItem('verdantPanicKey') || '';
+                    storedRedirectUrl = redirectUrlInput ? redirectUrlInput.value.trim() : localStorage.getItem('verdantRedirectUrl') || 'https://google.com';
+
+                    if (storedRedirectUrl && !storedRedirectUrl.startsWith('http://') && !storedRedirectUrl.startsWith('https://')) {
+                        showMessageBox("Please enter a valid URL (e.g., https://google.com).");
+                        return;
+                    }
+
+                    isPanicKeyEnabled = !isPanicKeyEnabled;
+
+                    localStorage.setItem('verdantPanicKey', storedPanicKey);
+                    localStorage.setItem('verdantRedirectUrl', storedRedirectUrl);
+                    localStorage.setItem('verdantPanicKeyEnabled', isPanicKeyEnabled);
+
+                    updatePanicKeyStatus();
+                    showMessageBox(`Panic Key ${isPanicKeyEnabled ? 'Enabled' : 'Disabled'}! Settings Saved.`);
+                });
+            }
+
+            if (launchBlankButton) {
+                launchBlankButton.addEventListener('click', launchSiteInAboutBlank);
+            }
+
+            if (homeLink) {
+                homeLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.location.assign(window.location.origin + '/index.html');
+                });
+            }
+
+            document.addEventListener('keydown', (e) => {
+                const currentPanicKey = localStorage.getItem('verdantPanicKey') || '';
+                const currentRedirectUrl = localStorage.getItem('verdantRedirectUrl') || 'https://google.com';
+                const currentIsPanicKeyEnabled = (localStorage.getItem('verdantPanicKeyEnabled') === 'true');
+
+                if (currentIsPanicKeyEnabled && currentPanicKey && e.key.toLowerCase() === currentPanicKey.toLowerCase()) {
+                    e.preventDefault();
+                    if (currentRedirectUrl) {
+                        window.location.replace(currentRedirectUrl);
+                    } else {
+                        console.warn("Panic key pressed but no redirect URL set in localStorage.");
+                    }
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

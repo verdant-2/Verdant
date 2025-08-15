@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verdant</title>
+    <link rel="icon" href="https://ik.imagekit.io/7krb4a8ap/76deab65-6483-4a91-8645-48ba0a4d5e82-removebg-preview.png" sizes="144x144">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .iframe-container {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 6rem - 2rem);
+            max-width: 1200px;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            flex-grow: 1;
+            transition: height 0.5s ease-in-out, max-width 0.5s ease-in-out, margin 0.5s ease-in-out, border-radius 0.3s ease-in-out;
+        }
+
+        body.game-active .game-content-area,
+        body.game-active .main-title,
+        body.game-active .search-bar-container,
+        body.game-active .footer-container {
+            display: none;
+        }
+
+        body.game-active main {
+            justify-content: flex-start;
+            align-items: stretch;
+            padding: 0;
+        }
+
+        body.game-active .iframe-container {
+            flex-grow: 1;
+            width: 100%;
+            max-width: none;
+            border-radius: 0;
+            margin-top: 0;
+            margin-bottom: 0;
+            height: 100vh;
+        }
+
+        .iframe-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: #000;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            border-radius: 0.75rem;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 10;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .game-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transform: scale(1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+            background-color: #262626;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .game-card img {
+            width: 120px;
+            height: 120px;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            object-fit: cover;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-card h4 {
+            color: #6EE7B7;
+        }
+
+        .game-cards-grid {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+
+        @media (min-width: 768px) {
+            .game-cards-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .game-cards-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 2rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-neutral-900 text-neutral-200 min-h-screen flex flex-col">
+
+    <header class="p-4 md:p-6 flex justify-between items-center border-b border-neutral-700">
+        <a href="index.html" id="home-link" class="text-lg md:text-xl font-bold text-emerald-300 hover:text-emerald-400 transition-colors duration-200">
+            Verdant
+        </a>
+        <nav>
+            <ul class="flex space-x-4 md:space-x-8 text-neutral-300 text-sm md:text-base">
+                <li><a href="games.html" id="games-nav-link" class="hover:text-emerald-400 transition-colors duration-200">Games</a></li>
+                <li><a href="apps.html" class="hover:text-emerald-400 transition-colors duration-200">Apps</a></li>
+                <li><a href="movies.html" class="hover:text-emerald-400 transition-colors duration-200">Movies</a></li>
+                <li><a href="ai.html" class="hover:text-emerald-400 transition-colors duration-200">AI Chat</a></li>
+                <li><a href="settings.html" class="hover:text-emerald-400 transition-colors duration-200">Settings</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="flex-grow flex flex-col items-center justify-center p-4">
+        <h1 class="main-title text-4xl md:text-6xl font-bold text-emerald-200 mb-8 tracking-tighter text-center">
+            Games
+        </h1>
+
+        <div class="search-bar-container w-full max-w-lg mb-8 px-4">
+            <input type="text" id="game-search-input" placeholder="Search for games..."
+                   class="w-full p-3 rounded-lg bg-neutral-800 border border-emerald-600 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-200 shadow-md">
+        </div>
+
+        <div class="game-content-area w-full max-w-5xl px-4 py-8">
+            <div class="game-cards-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 justify-center">
+                <div class="game-card" data-url="games/subway-surfers.html">
+                    <img src="https://img.poki-cdn.com/cdn-cgi/image/quality=78,width=314,height=314,fit=cover,f=auto/fdae0f0b6a984e94f7b94842ab203f86.png" alt="Subway Surfers Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Subway Surfers</h4>
+                </div>
+                <div class="game-card" data-url="games/fireboy-watergirl.html">
+                    <img src="https://play-lh.googleusercontent.com/6N_ON50BZiEAe-ll2lM92NrVrgp5I5Ha6VI0a4Usw7uPmgEjL6tgJR6jWYUkkYgx2LM" alt="Fireboy and Watergirl Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Fireboy & Watergirl</h4>
+                </div>
+                <div class="game-card" data-url="games/moto-x3m.html">
+                    <img src="https://img.poki-cdn.com/cdn-cgi/image/quality=78,width=314,height=314,fit=cover,f=auto/2c6d5a46cdbceada277c870ce1c389ee.jpg" alt="Moto X3M Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Moto X3M</h4>
+                </div>
+                <div class="game-card" data-url="games/fnaf.html">
+                    <img src="https://play-lh.googleusercontent.com/GYcyLlHWoZumcal0WmDJJo2rCFyl3Y0mwXm0zaD-C9gC0PJGQMhzOKHfDUVlqSDlag=w240-h480-rw" alt="Five Nights at Freddy's Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">FNAF</h4>
+                </div>
+                <div class="game-card" data-url="games/temple-run-2.html">
+                    <img src="https://img.poki-cdn.com/cdn-cgi/image/quality=78,width=314,height=314,fit=cover,f=auto/b5c8b617f65be7cc4d56dd3657590ae7.png" alt="Temple Run 2 Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Temple Run 2</h4>
+                </div>
+                <div class="game-card" data-url="games/run-3.html">
+                    <img src="https://img.poki-cdn.com/cdn-cgi/image/quality=78,width=314,height=314,fit=cover,f=auto/d3c19e9b-9b7b-4a54-9cb5-6188a5bd7d3b.png" alt="Run 3 Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Run 3</h4>
+                </div>
+                <div class="game-card" data-url="games/slope.html">
+                    <img src="https://play-lh.googleusercontent.com/uJn2i9h7KxYQarC_c3K4qH6o7gLtflFnhD_dN14MNkzHJ1NeNFzCL69jpB5mT0vCoQs">
+                    <h4 class="text-xl font-bold text-teal-300">Slope</h4>
+                </div>
+                <div class="game-card" data-url="games/retro-bowl.html">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6S5iWVLfII_b95zXf6AIHcmJKPDwrEa7M4g&s" alt="Retro Bowl Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Retro Bowl</h4>
+                </div>
+                <div class="game-card" data-url="games/vex-4.html">
+                    <img src="https://htmlxm.github.io/thumb/vex-4.png" alt="Vex 4 Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Vex 4</h4>
+                </div>
+                <div class="game-card" data-url="games/escape.html">
+                    <img src="https://img.poki-cdn.com/cdn-cgi/image/quality=78,width=314,height=314,fit=cover,f=auto/baf55f009fd63dd63c760a5dcfe79615/drift-boss.png" alt="Driving Fever Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Drift Boss</h4>
+                </div>
+                <div class="game-card" data-url="games/drift.html">
+                    <img src="https://escaperoad.io/data/image/game/escape-road-game-sr1.jpg" alt="Stack Game Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Escape Road</h4>
+                </div>
+                <div class="game-card" data-url="games/tunnel.html">
+                    <img src="https://m.media-amazon.com/images/I/41h70UiNByL._SL500_.jpg" alt="Tunnel Rush Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Tunnel Rush</h4>
+                </div>
+                <div class="game-card" data-url="games/paperio.html">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4qJVLuHb4EH8h7QU5C4k_Jb44aHgcxgTNKg&s" alt="Paper.io 2 Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Paper.io</h4>
+                </div>
+                <div class="game-card" data-url="games/gunspin.html">
+                    <img src="https://static.keygames.com/4/113974/98896/1024x1024/gunspin.webp" alt="Raft Wars Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Gun Spin</h4>
+                </div>
+                <div class="game-card" data-url="games/stick-fight.html">
+                    <img src="https://img.gamemonetize.com/5j175sdjnq1k88ac39mr8whz5sm8o44b/512x384.jpg" alt="Stick Fight The Game Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Stick Fight</h4>
+                </div>
+                <div class="game-card" data-url="games/1v1.html">
+                    <img src="https://1v1lol.me/wp-content/uploads/sites/46/2024/03/1v1-lol-1.webp" alt="Bullet Force Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">1v1.lol</h4>
+                </div>
+                <div class="game-card" data-url="games/timeshooter.html">
+                    <img src="https://images.crazygames.com/time-shooter-2_1x1/20241113040556/time-shooter-2_1x1-cover?auto=format,compress&q=75&cs=strip&w=1200" alt="Crazy Games Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Time Shooter</h4>
+                </div>
+                <div class="game-card" data-url="games/crazycattle.html">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYs3EYOzNjBBOycqggTMA1yhVu2NIoIloBhA&s" alt="Stickman Hook Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Crazy Cattle 3D</h4>
+                </div>
+                <div class="game-card" data-url="games/basket.html">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHIQ8F1z-6o9kt5V3UUoJszfoGpVazjsYQJtn2dONgDcnZ7R7TP_Dxj2ln_p0wGYj4sQg&usqp=CAU" alt="Basketball Legends Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Basket Random</h4>
+                </div>
+                <div class="game-card" data-url="games/timeshooter3.html">
+                    <img src="https://images.crazygames.com/time-shooter-3-swat_1x1/20241113103402/time-shooter-3-swat_1x1-cover?auto=format,compress&q=75&cs=strip&w=1200"
+                    alt="Football Legends Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Time Shooter 3</h4>
+                </div>
+                <div class="game-card" data-url="games/drive-mad.html">
+                    <img src="https://res.xc.com/res/cover/2x/30370.webp" alt="Drive Mad Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Drive Mad</h4>
+                </div>
+                <div class="game-card" data-url="games/flappydunk.html">
+                    <img src="https://images.crazygames.com/flappy-dunk_1x1/20231204133706/flappy-dunk_1x1-cover?auto=format,compress&q=75&cs=strip&w=1200" alt="Who Is? Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Flappy Dunk</h4>
+                </div>
+                <div class="game-card" data-url="games/wordle.html">
+                    <img src="https://static01.nyt.com/images/2022/03/02/crosswords/alpha-wordle-icon-new/alpha-wordle-icon-new-smallSquare252-v3.png?format=pjpg&quality=75&auto=webp&disable=upscale" alt="Wordle Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Wordle</h4>
+                </div>
+                <div class="game-card" data-url="games/tetris.html">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGoUi1qGGfZ_3ynZueswjTic4lOmu8JqWK7Gy8OqScdWq1-4M7VpyMW9AlJaskcRpm3cQ&usqp=CAU" alt="Tetris Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Bottle Jump 3D</h4>
+                </div>
+                <div class="game-card" data-url="games/2048.html">
+                    <img src="https://images.crazygames.com/games/2048/cover_1x1-1707828857318.png?auto=format,compress&q=75&cs=strip" alt="2048 Game Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">2048</h4>
+                </div>
+                <div class="game-card" data-url="games/baseball.html">
+                    <img src="https://rocketgames.imgix.net/uploads/games/d/doodle-baseball/doodle-baseball.41aa94.jpg" alt="Bad Ice-Cream 2 Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Google Baseball</h4>
+                </div>
+                <div class="game-card" data-url="games/minecraft.html">
+                    <img src="https://i.pinimg.com/1200x/7f/c4/9c/7fc49c4adbc07dfa36156c131d4c4f7a.jpg" alt="Stick Duel Battle Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Minecraft</h4>
+                </div>
+                <div class="game-card" data-url="games/madalin-stunt-cars-2.html">
+                    <img src="https://history-spot.com/wp-content/uploads/2024/08/madalin-stunt-cars-2.webp" alt="Madalin Stunt Cars 2 Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Madalin Stunt Cars 2</h4>
+                </div>
+                <div class="game-card" data-url="games/pixel.html">
+                    <img src="https://img.tapimg.net/market/images/FnLqAmvifd6s_g86nMtL2tNOCcIh.jpg?imageView2/0/h/270/format/jpg/interlace/1/ignore-error/1&t=1" alt="OvO Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">Pixel Speedrun</h4>
+                </div>
+                <div class="game-card" data-url="games/impossible-quiz.html">
+                    <img src="https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=314,height=314,fit=cover,f=auto/3cd96c99-46c1-4ff0-b04a-82381ea07349/the-impossible-quiz.png" alt="The Impossible Quiz Logo" class="rounded-lg mb-4 object-cover">
+                    <h4 class="text-xl font-bold text-teal-300">The Impossible Quiz</h4>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-iframe-container" class="iframe-container hidden">
+            <iframe id="game-iframe" class="w-full h-full" allowfullscreen></iframe>
+            <div id="loading-overlay" class="loading-overlay hidden">
+                <div class="spinner"></div>
+                <p>Loading game...</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer-container p-4 md:p-6 flex justify-between items-center text-xs md:text-sm text-neutral-400 border-t border-neutral-700">
+        <div class="flex items-center">
+            &copy; 2025 Verdant
+        </div>
+        <div class="space-x-4 md:space-x-8">
+            <a href="partners.html" class="hover:text-emerald-400 transition-colors duration-200">Partners</a>
+            <a href="https://discord.gg/fwXJpGdBHd" class="hover:text-emerald-400 transition-colors duration-200">Discord</a>
+            <a href="https://forms.gle/mnPMkYqdD2cxT5F49" class="hover:text-emerald-400 transition-colors duration-200">Feedback</a>
+        </div>
+    </footer>
+
+    <script>
+        const homeLink = document.getElementById('home-link');
+        const gamesNavLink = document.getElementById('games-nav-link');
+        const gameIframeContainer = document.getElementById('game-iframe-container');
+        const gameIframe = document.getElementById('game-iframe');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const mainTitle = document.querySelector('.main-title');
+        const gameContentArea = document.querySelector('.game-content-area');
+        const gameSearchInput = document.getElementById('game-search-input');
+
+        function loadGameInIframe(url, frame, overlay) {
+            if (!url) {
+                console.error("No URL provided to load game.");
+                return;
+            }
+
+            if (overlay) overlay.classList.remove('hidden');
+
+            frame.src = url;
+
+            frame.onload = () => {
+                if (overlay) overlay.classList.add('hidden');
+                console.log(`Iframe loaded: ${url}`);
+            };
+            frame.onerror = () => {
+                if (overlay) overlay.classList.add('hidden');
+                console.error(`Error loading iframe: ${url}`);
+                frame.srcdoc = `
+                    <div style="color:white;text-align:center;font-size:20px;font-family:sans-serif;padding:50px;background-color:#333;">
+                        Error: Failed to load game.<br><br>
+                        This might be due to the game file not being found or an issue with its content.
+                        Please check the game file or try a different game.
+                    </div>
+                `;
+            };
+        }
+
+        function resetHomePage() {
+            document.body.classList.remove('game-active');
+            gameIframeContainer.classList.add('hidden');
+
+            mainTitle.classList.remove('hidden');
+            gameContentArea.classList.remove('hidden');
+
+            gameIframe.src = 'about:blank';
+
+            gameSearchInput.value = '';
+            document.querySelectorAll('.game-card').forEach(card => {
+                card.style.display = 'flex';
+            });
+        }
+
+        homeLink.addEventListener('click', (event) => {
+        });
+
+        gamesNavLink.addEventListener('click', (event) => {
+            event.preventDefault();
+            resetHomePage();
+        });
+
+        gameSearchInput.addEventListener('input', (event) => {
+            const searchQuery = event.target.value.toLowerCase().trim();
+            const gameCards = document.querySelectorAll('.game-card');
+
+            gameCards.forEach(card => {
+                const gameTitle = card.querySelector('h4').textContent.toLowerCase();
+                if (gameTitle.includes(searchQuery)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        document.querySelectorAll('.game-card').forEach(card => {
+            card.addEventListener('click', (event) => {
+                event.preventDefault();
+                const gameUrl = card.dataset.url;
+
+                if (gameUrl) {
+                    mainTitle.classList.add('hidden');
+                    gameContentArea.classList.add('hidden');
+                    document.querySelector('.search-bar-container').classList.add('hidden');
+
+
+                    document.body.classList.add('game-active');
+                    gameIframeContainer.classList.remove('hidden');
+
+                    loadGameInIframe(gameUrl, gameIframe, loadingOverlay);
+                } else {
+                    console.error("Game URL not found for this game card.");
+                }
+            });
+        });
+
+        resetHomePage();
+    </script>
+    <div id="message-box-overlay" class="message-box-overlay hidden">
+        <div class="message-box-content">
+            <p id="message-box-text"></p>
+            <button id="message-box-ok">OK</button>
+        </div>
+    </div>
+
+    <script>
+        function showMessageBox(message) {
+            const messageBoxOverlay = document.getElementById('message-box-overlay');
+            const messageBoxText = document.getElementById('message-box-text');
+            const messageBoxOkButton = document.getElementById('message-box-ok');
+
+            if (!messageBoxOverlay || !messageBoxText || !messageBoxOkButton) {
+                console.error("Message box elements not found. Please ensure #message-box-overlay, #message-box-text, and #message-box-ok exist in your HTML if you want messages to display.");
+                return;
+            }
+
+            messageBoxText.textContent = message;
+            messageBoxOverlay.classList.remove('hidden');
+
+            const hideMessageBox = () => {
+                messageBoxOverlay.classList.add('hidden');
+                messageBoxOkButton.removeEventListener('click', hideMessageBox);
+            };
+
+            messageBoxOkButton.addEventListener('click', hideMessageBox);
+        }
+
+        function launchSiteInAboutBlank() {
+            const siteURL = window.location.origin + '/index.html';
+            const newTab = window.open('about:blank', '_blank');
+
+            if (newTab) {
+                newTab.opener = null;
+                const content = `
+                    <html>
+                    <head>
+                        <title>about:blank</title>
+                        <style>
+                            body { margin:0; padding:0; overflow:hidden; }
+                            iframe { border:none; width:100vw; height:100vh; }
+                        </style>
+                    </head>
+                    <body>
+                        <iframe src="${siteURL}"></iframe>
+                    </body>
+                    </html>`;
+                newTab.document.write(content);
+                newTab.document.close();
+            } else {
+                showMessageBox("Please allow pop-ups for this site to launch in about:blank.");
+                console.error("Pop-up blocked: Unable to launch in about:blank.");
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const launchBlankButton = document.getElementById('launch-blank-button');
+            const homeLink = document.getElementById('home-link');
+            const panicKeyInput = document.getElementById('panic-key-input');
+            const redirectUrlInput = document.getElementById('redirect-url-input');
+            const togglePanicKeyButton = document.getElementById('toggle-panic-key-button');
+            const panicKeyStatus = document.getElementById('panic-key-status');
+
+            let storedPanicKey = localStorage.getItem('verdantPanicKey') || '';
+            let storedRedirectUrl = localStorage.getItem('verdantRedirectUrl') || 'https://google.com';
+            let isPanicKeyEnabled = (localStorage.getItem('verdantPanicKeyEnabled') === 'true');
+
+            function updatePanicKeyStatus() {
+                if (panicKeyStatus) {
+                    if (isPanicKeyEnabled) {
+                        panicKeyStatus.textContent = `Panic Key: Enabled (Key: '${storedPanicKey || 'Not Set'}', Redirect: '${storedRedirectUrl}')`;
+                        panicKeyStatus.classList.remove('text-red-400');
+                        panicKeyStatus.classList.add('text-emerald-400');
+                    } else {
+                        panicKeyStatus.textContent = `Panic Key: Disabled`;
+                        panicKeyStatus.classList.remove('text-emerald-400');
+                        panicKeyStatus.classList.add('text-red-400');
+                    }
+                }
+            }
+
+            if (panicKeyInput) {
+                panicKeyInput.value = storedPanicKey;
+                panicKeyInput.addEventListener('keydown', (e) => {
+                    e.preventDefault();
+                    panicKeyInput.value = e.key;
+                    storedPanicKey = e.key;
+                    showMessageBox(`Panic key set to: '${e.key}'`);
+                });
+            }
+            if (redirectUrlInput) {
+                redirectUrlInput.value = storedRedirectUrl;
+            }
+            updatePanicKeyStatus();
+
+            if (togglePanicKeyButton) {
+                togglePanicKeyButton.addEventListener('click', () => {
+                    storedPanicKey = panicKeyInput ? panicKeyInput.value.trim() : localStorage.getItem('verdantPanicKey') || '';
+                    storedRedirectUrl = redirectUrlInput ? redirectUrlInput.value.trim() : localStorage.getItem('verdantRedirectUrl') || 'https://google.com';
+
+                    if (storedRedirectUrl && !storedRedirectUrl.startsWith('http://') && !storedRedirectUrl.startsWith('https://')) {
+                        showMessageBox("Please enter a valid URL (e.g., https://google.com).");
+                        return;
+                    }
+
+                    isPanicKeyEnabled = !isPanicKeyEnabled;
+
+                    localStorage.setItem('verdantPanicKey', storedPanicKey);
+                    localStorage.setItem('verdantRedirectUrl', storedRedirectUrl);
+                    localStorage.setItem('verdantPanicKeyEnabled', isPanicKeyEnabled);
+
+                    updatePanicKeyStatus();
+                    showMessageBox(`Panic Key ${isPanicKeyEnabled ? 'Enabled' : 'Disabled'}! Settings Saved.`);
+                });
+            }
+
+            if (launchBlankButton) {
+                launchBlankButton.addEventListener('click', launchSiteInAboutBlank);
+            }
+
+            if (homeLink) {
+                homeLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.location.assign(window.location.origin + '/index.html');
+                });
+            }
+
+            document.addEventListener('keydown', (e) => {
+                const currentPanicKey = localStorage.getItem('verdantPanicKey') || '';
+                const currentRedirectUrl = localStorage.getItem('verdantRedirectUrl') || 'https://google.com';
+                const currentIsPanicKeyEnabled = (localStorage.getItem('verdantPanicKeyEnabled') === 'true');
+
+                if (currentIsPanicKeyEnabled && currentPanicKey && e.key.toLowerCase() === currentPanicKey.toLowerCase()) {
+                    e.preventDefault();
+                    if (currentRedirectUrl) {
+                        window.location.replace(currentRedirectUrl);
+                    } else {
+                        console.warn("Panic key pressed but no redirect URL set in localStorage.");
+                    }
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

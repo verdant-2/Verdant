@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verdant</title>
+    <link rel="icon" href="https://ik.imagekit.io/7krb4a8ap/76deab65-6483-4a91-8645-48ba0a4d5e82-removebg-preview.png" sizes="144x144">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-color: #171717;
+            color: #e5e5e5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .settings-section {
+            background-color: #262626;
+            border: 1px solid #065f46;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .settings-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            background-color: #059669;
+            color: white;
+            transition: background-color 0.2s, transform 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .settings-button:hover {
+            background-color: #047857;
+            transform: translateY(-2px);
+        }
+
+        .settings-button:active {
+            transform: translateY(0);
+        }
+
+        .settings-input {
+            width: 100%;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #065f46;
+            background-color: #1f2937;
+            color: #e5e5e5;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .settings-input:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+        }
+
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .message-box-content {
+            background-color: #1f2937;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid #065f46;
+            color: #d1d5db;
+        }
+
+        .message-box-content button {
+            background-color: #059669;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            margin-top: 1rem;
+        }
+
+        .message-box-content button:hover {
+            background-color: #047857;
+        }
+    </style>
+</head>
+<body class="bg-neutral-900 text-neutral-200 flex flex-col min-h-screen">
+
+    <header class="p-4 md:p-6 flex justify-between items-center border-b border-neutral-700">
+        <a href="index.html" id="home-link" class="text-lg md:text-xl font-bold text-emerald-300 hover:text-emerald-400 transition-colors duration-200">
+            Verdant
+        </a>
+        <nav>
+            <ul class="flex space-x-4 md:space-x-8 text-neutral-300 text-sm md:text-base">
+                <li><a href="games.html" class="hover:text-emerald-400 transition-colors duration-200">Games</a></li>
+                <li><a href="apps.html" class="hover:text-emerald-400 transition-colors duration-200">Apps</a></li>
+                <li><a href="movies.html" class="hover:text-emerald-400 transition-colors duration-200">Movies</a></li>
+                <li><a href="ai.html" class="hover:text-emerald-400 transition-colors duration-200">AI Chat</a></li>
+                <li><a href="settings.html" class="hover:text-emerald-400 transition-colors duration-200">Settings</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="flex-grow flex flex-col items-center p-6">
+        <h1 class="text-5xl md:text-6xl font-bold text-emerald-200 mb-10 tracking-tighter text-center">
+            Settings
+        </h1>
+        <div class="flex flex-col md:flex-row md:flex-wrap justify-center md:gap-8 w-full max-w-4xl">
+            <div class="settings-section w-full md:w-[calc(50%-1rem)] mb-8 md:mb-0">
+                <h2 class="text-3xl font-semibold text-emerald-300 mb-4">Launch in about:blank</h2>
+                <p class="text-neutral-300 mb-6">
+                    Launch the Verdant in an `about:blank` tab to potentially bypass network restrictions.
+                </p>
+                <button id="launch-blank-button" class="settings-button">
+                    Launch in about:blank
+                </button>
+            </div>
+
+            <div class="settings-section w-full md:w-[calc(50%-1rem)]">
+                <h2 class="text-3xl font-semibold text-emerald-300 mb-4">Panic Key Settings</h2>
+                <p class="text-neutral-300 mb-4">
+                    Set a key to quickly redirect to a specified URL.
+                </p>
+                <label for="panic-key-input" class="block text-neutral-300 text-sm font-bold mb-2">
+                    Panic Key (e.g., E, Y, Escape):
+                </label>
+                <input type="text" id="panic-key-input" class="settings-input" placeholder="Press a key (e.g., Esc, E)">
+
+                <label for="redirect-url-input" class="block text-neutral-300 text-sm font-bold mb-2 mt-4">
+                    Redirect URL (e.g., https://google.com):
+                </label>
+                <input type="url" id="redirect-url-input" class="settings-input" placeholder="Enter URL">
+
+                <p id="panic-key-status" class="text-neutral-400 text-sm mb-6">
+                    Panic Key: Disabled
+                </p>
+
+                <button id="toggle-panic-key-button" class="settings-button w-full">
+                    Toggle Panic Key
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer-container p-4 md:p-6 flex justify-between items-center text-xs md:text-sm text-neutral-400 border-t border-neutral-700 mt-auto">
+        <div class="flex items-center">
+            &copy; 2025 Verdant
+        </div>
+        <div class="space-x-4 md:space-x-8">
+            <a href="partners.html" class="hover:text-emerald-400 transition-colors duration-200">Partners</a>
+            <a href="https://discord.gg/fwXJpGdBHd" class="hover:text-emerald-400 transition-colors duration-200">Discord</a>
+            <a href="https://forms.gle/mnPMkYqdD2cxT5F49" class="hover:text-emerald-400 transition-colors duration-200">Feedback</a>
+        </div>
+    </footer>
+
+    <div id="message-box-overlay" class="message-box-overlay hidden">
+        <div class="message-box-content">
+            <p id="message-box-text"></p>
+            <button id="message-box-ok">OK</button>
+        </div>
+    </div>
+
+    <script>
+        function showMessageBox(message) {
+            const messageBoxOverlay = document.getElementById('message-box-overlay');
+            const messageBoxText = document.getElementById('message-box-text');
+            const messageBoxOkButton = document.getElementById('message-box-ok');
+
+            if (!messageBoxOverlay || !messageBoxText || !messageBoxOkButton) {
+                console.error("Message box elements not found. Please ensure #message-box-overlay, #message-box-text, and #message-box-ok exist in your HTML if you want messages to display.");
+                return;
+            }
+
+            messageBoxText.textContent = message;
+            messageBoxOverlay.classList.remove('hidden');
+
+            const hideMessageBox = () => {
+                messageBoxOverlay.classList.add('hidden');
+                messageBoxOkButton.removeEventListener('click', hideMessageBox);
+            };
+
+            messageBoxOkButton.addEventListener('click', hideMessageBox);
+        }
+
+        function launchSiteInAboutBlank() {
+            const siteURL = window.location.origin + '/index.html';
+            const newTab = window.open('about:blank', '_blank');
+
+            if (newTab) {
+                newTab.opener = null;
+                const content = `
+                    <html>
+                    <head>
+                        <title>about:blank</title>
+                        <style>
+                            body { margin:0; padding:0; overflow:hidden; }
+                            iframe { border:none; width:100vw; height:100vh; }
+                        </style>
+                    </head>
+                    <body>
+                        <iframe src="${siteURL}"></iframe>
+                    </body>
+                    </html>`;
+                newTab.document.write(content);
+                newTab.document.close();
+            } else {
+                showMessageBox("Please allow pop-ups for this site to launch in about:blank.");
+                console.error("Pop-up blocked: Unable to launch in about:blank.");
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const launchBlankButton = document.getElementById('launch-blank-button');
+            const homeLink = document.getElementById('home-link');
+
+            const panicKeyInput = document.getElementById('panic-key-input');
+            const redirectUrlInput = document.getElementById('redirect-url-input');
+            const togglePanicKeyButton = document.getElementById('toggle-panic-key-button');
+            const panicKeyStatus = document.getElementById('panic-key-status');
+
+            let storedPanicKey = localStorage.getItem('verdantPanicKey') || '';
+            let storedRedirectUrl = localStorage.getItem('verdantRedirectUrl') || 'https://google.com';
+            let isPanicKeyEnabled = (localStorage.getItem('verdantPanicKeyEnabled') === 'true');
+
+            function updatePanicKeyStatus() {
+                if (panicKeyStatus) {
+                    if (isPanicKeyEnabled) {
+                        panicKeyStatus.textContent = `Panic Key: Enabled (Key: '${storedPanicKey || 'Not Set'}', Redirect: '${storedRedirectUrl}')`;
+                        panicKeyStatus.classList.remove('text-red-400');
+                        panicKeyStatus.classList.add('text-emerald-400');
+                    } else {
+                        panicKeyStatus.textContent = `Panic Key: Disabled`;
+                        panicKeyStatus.classList.remove('text-emerald-400');
+                        panicKeyStatus.classList.add('text-red-400');
+                    }
+                }
+            }
+
+            if (panicKeyInput) {
+                panicKeyInput.value = storedPanicKey;
+                panicKeyInput.addEventListener('keydown', (e) => {
+                    e.preventDefault();
+                    panicKeyInput.value = e.key;
+                    storedPanicKey = e.key;
+                    showMessageBox(`Panic key set to: '${e.key}'`);
+                });
+            }
+            if (redirectUrlInput) {
+                redirectUrlInput.value = storedRedirectUrl;
+            }
+            updatePanicKeyStatus();
+
+            if (togglePanicKeyButton) {
+                togglePanicKeyButton.addEventListener('click', () => {
+                    storedPanicKey = panicKeyInput ? panicKeyInput.value.trim() : localStorage.getItem('verdantPanicKey') || '';
+                    storedRedirectUrl = redirectUrlInput ? redirectUrlInput.value.trim() : localStorage.getItem('verdantRedirectUrl') || 'https://google.com';
+
+                    if (storedRedirectUrl && !storedRedirectUrl.startsWith('http://') && !storedRedirectUrl.startsWith('https://')) {
+                        showMessageBox("Please enter a valid URL (e.g., https://google.com).");
+                        return;
+                    }
+
+                    isPanicKeyEnabled = !isPanicKeyEnabled;
+
+                    localStorage.setItem('verdantPanicKey', storedPanicKey);
+                    localStorage.setItem('verdantRedirectUrl', storedRedirectUrl);
+                    localStorage.setItem('verdantPanicKeyEnabled', isPanicKeyEnabled);
+
+                    updatePanicKeyStatus();
+                    showMessageBox(`Panic Key ${isPanicKeyEnabled ? 'Enabled' : 'Disabled'}! Settings Saved.`);
+                });
+            }
+
+            if (launchBlankButton) {
+                launchBlankButton.addEventListener('click', launchSiteInAboutBlank);
+            }
+
+            if (homeLink) {
+                homeLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.location.assign(window.location.origin + '/index.html');
+                });
+            }
+
+            document.addEventListener('keydown', (e) => {
+                const currentPanicKey = localStorage.getItem('verdantPanicKey') || '';
+                const currentRedirectUrl = localStorage.getItem('verdantRedirectUrl') || 'https://google.com';
+                const currentIsPanicKeyEnabled = (localStorage.getItem('verdantPanicKeyEnabled') === 'true');
+
+                if (currentIsPanicKeyEnabled && currentPanicKey && e.key.toLowerCase() === currentPanicKey.toLowerCase()) {
+                    e.preventDefault();
+                    if (currentRedirectUrl) {
+                        window.location.replace(currentRedirectUrl);
+                    } else {
+                        console.warn("Panic key pressed but no redirect URL set in localStorage.");
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
