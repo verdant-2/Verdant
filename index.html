@@ -401,7 +401,7 @@
                     proxyContentArea.appendChild(newIframe);
 
                     // Set the iframe's source to the desired URL with the query
-                    newIframe.src = `/s/embed.html?url=${encodeURIComponent(query)}`;
+                    newIframe.src = `s/embed.html?url=${encodeURIComponent(query)}`;
 
                     // Show loading overlay
                     loadingOverlay.style.display = 'flex';
@@ -677,6 +677,51 @@
             });
         });
     </script>
+    <style>
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+
+        .message-box-content {
+            background-color: #1f2937;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid #065f46;
+            color: #d1d5db;
+        }
+
+        .message-box-content button {
+            background-color: #059669;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            margin-top: 1rem;
+        }
+
+        .message-box-content button:hover {
+            background-color: #047857;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
 
 </body>
 </html>
