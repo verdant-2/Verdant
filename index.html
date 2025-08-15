@@ -234,11 +234,14 @@
             </button>
         </div>
 
+        <!-- The iframe container with the loading overlay -->
         <div id="proxy-content-area" class="iframe-container hidden">
             <div id="loading-overlay" class="loading-overlay">
                 <div class="spinner"></div>
-                <p>Loading content via proxy...</p>
+                <p>Loading content...</p>
             </div>
+            <!-- The browser iframe -->
+            <iframe id="browserFrame" name="browserFrame" class="hidden" src="about:blank"></iframe>
         </div>
 
         <div id="control-bar" class="hidden w-full p-2 bg-neutral-800 border border-emerald-600 flex items-center justify-between gap-2 z-20">
@@ -320,9 +323,10 @@
             </svg>`;
             minimizeButton.title = 'Minimize Control Bar';
 
-            let existingIframe = proxyContentArea.querySelector('iframe');
-            if (existingIframe) {
-                existingIframe.remove();
+            const iframe = document.getElementById('browserFrame');
+            if (iframe) {
+                iframe.src = 'about:blank';
+                iframe.classList.add('hidden');
             }
         }
 
@@ -352,6 +356,15 @@
         function loadUrl(url) {
             if (!url) return;
 
+            const processedUrl = processUrl(url);
+
+            // Show the loading overlay
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const iframe = document.getElementById('browserFrame');
+            
+            loadingOverlay.classList.remove('hidden');
+            iframe.classList.add('hidden');
+
             // Apply the new UI state.
             document.body.classList.add('proxy-active');
             mainTitle.style.display = 'none';
@@ -361,17 +374,15 @@
             proxyContentArea.classList.remove('hidden');
             controlBar.classList.remove('hidden');
 
-            // Remove any existing iframe to start fresh.
-            let existingIframe = proxyContentArea.querySelector('iframe');
-            if (existingIframe) {
-                existingIframe.remove();
-            }
+            // Set the iframe's source to the processed URL.
+            iframe.src = processedUrl;
+            urlBarInput.value = processedUrl;
 
-            // Create and append the new iframe.
-            const newIframe = document.createElement('iframe');
-            newIframe.src = `/s/embed.html#${processUrl(url)}`;
-            proxyContentArea.appendChild(newIframe);
-            urlBarInput.value = url;
+            // Add an event listener to hide the loading overlay once the page loads.
+            iframe.onload = () => {
+                loadingOverlay.classList.add('hidden');
+                iframe.classList.remove('hidden');
+            };
 
             // Reset control bar state.
             controlBar.classList.remove('minimized');
@@ -384,7 +395,6 @@
         const homeLink = document.getElementById('home-link');
         const searchInput = document.getElementById('search-input');
         const proxyContentArea = document.getElementById('proxy-content-area');
-        const loadingOverlay = document.getElementById('loading-overlay');
         const mainTitle = document.querySelector('.main-title');
         const searchBarContainer = document.querySelector('.search-bar-container');
         const footerContainer = document.querySelector('.footer-container');
@@ -415,21 +425,21 @@
         });
 
         backButton.addEventListener('click', () => {
-            const currentIframe = proxyContentArea.querySelector('iframe');
+            const currentIframe = document.getElementById('browserFrame');
             if (currentIframe && currentIframe.contentWindow) {
                 currentIframe.contentWindow.history.back();
             }
         });
 
         forwardButton.addEventListener('click', () => {
-            const currentIframe = proxyContentArea.querySelector('iframe');
+            const currentIframe = document.getElementById('browserFrame');
             if (currentIframe && currentIframe.contentWindow) {
                 currentIframe.contentWindow.history.forward();
             }
         });
 
         refreshButton.addEventListener('click', () => {
-            const currentIframe = proxyContentArea.querySelector('iframe');
+            const currentIframe = document.getElementById('browserFrame');
             if (currentIframe) {
                 currentIframe.contentWindow.location.reload();
             }
@@ -491,3 +501,4 @@
     </script>
 </body>
 </html>
+
