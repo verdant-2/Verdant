@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verdant</title>
-    <link rel="icon" href="https://ik.imagekit.io/7krb4a8ap/76deab65-6483-4a91-8645-48ba0a4d5e82-removebg-preview.png" sizes="144x144">
+        <link rel="icon" href="https://ik.imagekit.io/7krb4a8ap/76deab65-6483-4a91-8645-48ba0a4d5e82-removebg-preview.png" sizes="144x144">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
@@ -234,14 +234,11 @@
             </button>
         </div>
 
-        <!-- The iframe container with the loading overlay -->
         <div id="proxy-content-area" class="iframe-container hidden">
             <div id="loading-overlay" class="loading-overlay">
                 <div class="spinner"></div>
-                <p>Loading content...</p>
+                <p>Loading content via proxy...</p>
             </div>
-            <!-- The browser iframe -->
-            <iframe id="browserFrame" name="browserFrame" class="hidden" src="about:blank"></iframe>
         </div>
 
         <div id="control-bar" class="hidden w-full p-2 bg-neutral-800 border border-emerald-600 flex items-center justify-between gap-2 z-20">
@@ -292,114 +289,40 @@
     </div>
 
     <script>
-        // Helper function to update the personal greeting.
-        function updatePersonalGreeting() {
-            const userName = localStorage.getItem('userName');
-            if (userName) {
-                personalGreeting.textContent = `${userName}`;
-                personalGreeting.classList.remove('hidden');
-            } else {
-                personalGreeting.textContent = '';
-                personalGreeting.classList.add('hidden');
-            }
-        }
+        // The rest of the functions remain unchanged, only the searchInput event listener is updated.
 
-        // Resets the page to its initial state.
-        function resetHomePage() {
-            document.body.classList.remove('proxy-active');
-            proxyContentArea.classList.add('hidden');
-            controlBar.classList.add('hidden');
-            searchInput.value = '';
-            urlBarInput.value = '';
-            
-            mainTitle.style.display = '';
-            searchBarContainer.style.display = '';
-            footerContainer.style.display = '';
-            updatePersonalGreeting();
-
-            controlBar.classList.remove('minimized');
-            minimizeButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
-            </svg>`;
-            minimizeButton.title = 'Minimize Control Bar';
-
-            const iframe = document.getElementById('browserFrame');
-            if (iframe) {
-                iframe.src = 'about:blank';
-                iframe.classList.add('hidden');
-            }
-        }
-
-        // Utility function to determine if a string is a valid URL.
-        function isValidUrl(string) {
+        function encodeBase64(str) {
             try {
-                new URL(string);
-                return true;
-            } catch (_) {
-                return false;
+                return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+                    function toSolidBytes(match, p1) {
+                        return String.fromCharCode('0x' + p1);
+                    }));
+            } catch (e) {
+                console.error("Base64 encoding failed:", e);
+                return btoa(str);
             }
         }
 
-        // Processes the URL for the iframe src.
-        function processUrl(url) {
-            if (!isValidUrl(url)) {
-                return `https://www.google.com/search?q=${encodeURIComponent(url)}`;
+        function decodeBase64(str) {
+            try {
+                return decodeURIComponent(atob(str).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+            } catch (e) {
+                console.error("Base64 decoding failed:", e);
+                return null;
             }
-            // Add https:// if it's missing, but it's a valid URL format (e.g., 'example.com')
-            if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                return `https://${url}`;
-            }
-            return url;
-        }
-
-        // New function to handle loading the URL into the iframe.
-        function loadUrl(url) {
-            if (!url) return;
-
-            const processedUrl = processUrl(url);
-
-            // Show the loading overlay
-            const loadingOverlay = document.getElementById('loading-overlay');
-            const iframe = document.getElementById('browserFrame');
-            
-            loadingOverlay.classList.remove('hidden');
-            iframe.classList.add('hidden');
-
-            // Apply the new UI state.
-            document.body.classList.add('proxy-active');
-            mainTitle.style.display = 'none';
-            personalGreeting.style.display = 'none';
-            searchBarContainer.style.display = 'none';
-            footerContainer.style.display = 'none';
-            proxyContentArea.classList.remove('hidden');
-            controlBar.classList.remove('hidden');
-
-            // Set the iframe's source to the processed URL.
-            iframe.src = processedUrl;
-            urlBarInput.value = processedUrl;
-
-            // Add an event listener to hide the loading overlay once the page loads.
-            iframe.onload = () => {
-                loadingOverlay.classList.add('hidden');
-                iframe.classList.remove('hidden');
-            };
-
-            // Reset control bar state.
-            controlBar.classList.remove('minimized');
-            minimizeButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
-            </svg>`;
-            minimizeButton.title = 'Minimize Control Bar';
         }
 
         const homeLink = document.getElementById('home-link');
         const searchInput = document.getElementById('search-input');
         const proxyContentArea = document.getElementById('proxy-content-area');
+        const loadingOverlay = document.getElementById('loading-overlay');
         const mainTitle = document.querySelector('.main-title');
         const searchBarContainer = document.querySelector('.search-bar-container');
         const footerContainer = document.querySelector('.footer-container');
         const personalGreeting = document.getElementById('personal-greeting');
-        
+
         const controlBar = document.getElementById('control-bar');
         const backButton = document.getElementById('back-button');
         const forwardButton = document.getElementById('forward-button');
@@ -412,10 +335,82 @@
         const nameInput = document.getElementById('name-input');
         const saveNameButton = document.getElementById('save-name-button');
 
-        // Event listener for the main search input.
+        function updateUrlBar(actualLoadedUrl) {
+            const verdantProxyPrefix = window.location.origin + '/route/';
+            const encodedUrl = encodeBase64(actualLoadedUrl);
+            urlBarInput.value = verdantProxyPrefix + encodedUrl;
+        }
+
+        function updatePersonalGreeting() {
+            const userName = localStorage.getItem('userName');
+            if (userName) {
+                personalGreeting.textContent = `${userName}`;
+                personalGreeting.classList.remove('hidden');
+            } else {
+                personalGreeting.textContent = '';
+                personalGreeting.classList.add('hidden');
+            }
+        }
+
+        function resetHomePage() {
+            document.body.classList.remove('proxy-active');
+            proxyContentArea.classList.add('hidden');
+            controlBar.classList.add('hidden');
+            searchInput.value = '';
+            updateUrlBar('');
+
+            mainTitle.style.display = '';
+            searchBarContainer.style.display = '';
+            footerContainer.style.display = '';
+            updatePersonalGreeting();
+
+            controlBar.classList.remove('minimized');
+            minimizeButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+            </svg>`;
+            minimizeButton.title = 'Minimize Control Bar';
+
+            let existingIframe = proxyContentArea.querySelector('iframe');
+            if (existingIframe) {
+                existingIframe.remove();
+            }
+        }
+
         searchInput.addEventListener('keypress', (event) => {
             if (event.key === 'Enter') {
-                loadUrl(searchInput.value.trim());
+                const query = searchInput.value.trim();
+
+                if (query) {
+                    // Update classes and visibility
+                    document.body.classList.add('proxy-active');
+                    mainTitle.style.display = 'none';
+                    personalGreeting.style.display = 'none';
+                    searchBarContainer.style.display = 'none';
+                    footerContainer.style.display = 'none';
+                    proxyContentArea.classList.remove('hidden');
+                    controlBar.classList.remove('hidden');
+
+                    // Check for existing iframe and remove it to prevent duplicates
+                    let existingIframe = proxyContentArea.querySelector('iframe');
+                    if (existingIframe) {
+                        existingIframe.remove();
+                    }
+
+                    // Create and append a new iframe
+                    const newIframe = document.createElement('iframe');
+                    proxyContentArea.appendChild(newIframe);
+
+                    // Set the iframe's source to the desired URL with the query
+                    newIframe.src = `embed.html?url=${encodeURIComponent(query)}`;
+
+                    // Show loading overlay
+                    loadingOverlay.style.display = 'flex';
+
+                    // Hide loading overlay once the iframe content is loaded
+                    newIframe.addEventListener('load', () => {
+                        loadingOverlay.style.display = 'none';
+                    });
+                }
             }
         });
 
@@ -425,35 +420,59 @@
         });
 
         backButton.addEventListener('click', () => {
-            const currentIframe = document.getElementById('browserFrame');
+            const currentIframe = proxyContentArea.querySelector('iframe');
             if (currentIframe && currentIframe.contentWindow) {
-                currentIframe.contentWindow.history.back();
+                try {
+                    currentIframe.contentWindow.history.back();
+                } catch (e) {
+                     console.warn("Could not go back in iframe history (likely due to same-origin policy):", e);
+                }
             }
         });
 
         forwardButton.addEventListener('click', () => {
-            const currentIframe = document.getElementById('browserFrame');
+            const currentIframe = proxyContentArea.querySelector('iframe');
             if (currentIframe && currentIframe.contentWindow) {
-                currentIframe.contentWindow.history.forward();
+                try {
+                    currentIframe.contentWindow.history.forward();
+                } catch (e) {
+                     console.warn("Could not go forward in iframe history (likely due to same-origin policy):", e);
+                }
             }
         });
 
         refreshButton.addEventListener('click', () => {
-            const currentIframe = document.getElementById('browserFrame');
-            if (currentIframe) {
-                currentIframe.contentWindow.location.reload();
+            const currentIframe = proxyContentArea.querySelector('iframe');
+            if (currentIframe && currentIframe.contentWindow) {
+                try {
+                    const currentVerdantUrl = urlBarInput.value;
+                    proxyLoad(currentVerdantUrl, currentIframe, loadingOverlay);
+                } catch (e) {
+                     console.warn("Could not refresh iframe (likely due to same-origin policy):", e);
+                }
             }
         });
 
-        // Event listener for the go button in the control bar.
-        goButton.addEventListener('click', () => {
-            loadUrl(urlBarInput.value.trim());
-        });
-
-        // Event listener for the URL bar input.
+        function handleUrlBarNavigation() {
+            const newUrl = urlBarInput.value.trim();
+            if (newUrl) {
+                const currentIframe = proxyContentArea.querySelector('iframe');
+                if (currentIframe) {
+                    proxyLoad(newUrl, currentIframe, loadingOverlay);
+                } else {
+                    document.body.classList.add('proxy-active');
+                    proxyContentArea.classList.remove('hidden');
+                    controlBar.classList.remove('hidden');
+                    const newIframe = document.createElement('iframe');
+                    proxyContentArea.appendChild(newIframe);
+                    proxyLoad(newUrl, newIframe, loadingOverlay);
+                }
+            }
+        }
+        goButton.addEventListener('click', handleUrlBarNavigation);
         urlBarInput.addEventListener('keypress', (event) => {
             if (event.key === 'Enter') {
-                loadUrl(urlBarInput.value.trim());
+                handleUrlBarNavigation();
             }
         });
 
@@ -497,8 +516,167 @@
             } else {
                 updatePersonalGreeting();
             }
+
+            const path = window.location.pathname;
+            const verdantProxyPrefixPath = '/route/';
+            if (path.startsWith(verdantProxyPrefixPath)) {
+                const encodedUrl = path.substring(verdantProxyPrefixPath.length);
+                const decodedUrl = decodeBase64(encodedUrl);
+                if (decodedUrl) {
+                    document.body.classList.add('proxy-active');
+                    proxyContentArea.classList.remove('hidden');
+                    controlBar.classList.remove('hidden');
+                    const newIframe = document.createElement('iframe');
+                    proxyContentArea.appendChild(newIframe);
+                    proxyLoad(decodedUrl, newIframe, loadingOverlay);
+                }
+            }
         });
     </script>
+    <div id="message-box-overlay" class="message-box-overlay hidden">
+        <div class="message-box-content">
+            <p id="message-box-text"></p>
+            <button id="message-box-ok">OK</button>
+        </div>
+    </div>
+
+    <script>
+        function showMessageBox(message) {
+            const messageBoxOverlay = document.getElementById('message-box-overlay');
+            const messageBoxText = document.getElementById('message-box-text');
+            const messageBoxOkButton = document.getElementById('message-box-ok');
+
+            if (!messageBoxOverlay || !messageBoxText || !messageBoxOkButton) {
+                console.error("Message box elements not found. Please ensure #message-box-overlay, #message-box-text, and #message-box-ok exist in your HTML if you want messages to display.");
+                return;
+            }
+
+            messageBoxText.textContent = message;
+            messageBoxOverlay.classList.remove('hidden');
+
+            const hideMessageBox = () => {
+                messageBoxOverlay.classList.add('hidden');
+                messageBoxOkButton.removeEventListener('click', hideMessageBox);
+            };
+
+            messageBoxOkButton.addEventListener('click', hideMessageBox);
+        }
+
+        function launchSiteInAboutBlank() {
+            const siteURL = window.location.origin + '/index.html';
+            const newTab = window.open('about:blank', '_blank');
+
+            if (newTab) {
+                newTab.opener = null;
+                const content = `
+                    <html>
+                    <head>
+                        <title>about:blank</title>
+                        <style>
+                            body { margin:0; padding:0; overflow:hidden; }
+                            iframe { border:none; width:100vw; height:100vh; }
+                        </style>
+                    </head>
+                    <body>
+                        <iframe src="${siteURL}"></iframe>
+                    </body>
+                    </html>`;
+                newTab.document.write(content);
+                newTab.document.close();
+            } else {
+                showMessageBox("Please allow pop-ups for this site to launch in about:blank.");
+                console.error("Pop-up blocked: Unable to launch in about:blank.");
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const launchBlankButton = document.getElementById('launch-blank-button');
+            const homeLink = document.getElementById('home-link');
+            const panicKeyInput = document.getElementById('panic-key-input');
+            const redirectUrlInput = document.getElementById('redirect-url-input');
+            const togglePanicKeyButton = document.getElementById('toggle-panic-key-button');
+            const panicKeyStatus = document.getElementById('panic-key-status');
+
+            let storedPanicKey = localStorage.getItem('verdantPanicKey') || '';
+            let storedRedirectUrl = localStorage.getItem('verdantRedirectUrl') || 'https://google.com';
+            let isPanicKeyEnabled = (localStorage.getItem('verdantPanicKeyEnabled') === 'true');
+
+            function updatePanicKeyStatus() {
+                if (panicKeyStatus) {
+                    if (isPanicKeyEnabled) {
+                        panicKeyStatus.textContent = `Panic Key: Enabled (Key: '${storedPanicKey || 'Not Set'}', Redirect: '${storedRedirectUrl}')`;
+                        panicKeyStatus.classList.remove('text-red-400');
+                        panicKeyStatus.classList.add('text-emerald-400');
+                    } else {
+                        panicKeyStatus.textContent = `Panic Key: Disabled`;
+                        panicKeyStatus.classList.remove('text-emerald-400');
+                        panicKeyStatus.classList.add('text-red-400');
+                    }
+                }
+            }
+
+            if (panicKeyInput) {
+                panicKeyInput.value = storedPanicKey;
+                panicKeyInput.addEventListener('keydown', (e) => {
+                    e.preventDefault();
+                    panicKeyInput.value = e.key;
+                    storedPanicKey = e.key;
+                    showMessageBox(`Panic key set to: '${e.key}'`);
+                });
+            }
+            if (redirectUrlInput) {
+                redirectUrlInput.value = storedRedirectUrl;
+            }
+            updatePanicKeyStatus();
+
+            if (togglePanicKeyButton) {
+                togglePanicKeyButton.addEventListener('click', () => {
+                    storedPanicKey = panicKeyInput ? panicKeyInput.value.trim() : localStorage.getItem('verdantPanicKey') || '';
+                    storedRedirectUrl = redirectUrlInput ? redirectUrlInput.value.trim() : localStorage.getItem('verdantRedirectUrl') || 'https://google.com';
+
+                    if (storedRedirectUrl && !storedRedirectUrl.startsWith('http://') && !storedRedirectUrl.startsWith('https://')) {
+                        showMessageBox("Please enter a valid URL (e.g., https://google.com).");
+                        return;
+                    }
+
+                    isPanicKeyEnabled = !isPanicKeyEnabled;
+
+                    localStorage.setItem('verdantPanicKey', storedPanicKey);
+                    localStorage.setItem('verdantRedirectUrl', storedRedirectUrl);
+                    localStorage.setItem('verdantPanicKeyEnabled', isPanicKeyEnabled);
+
+                    updatePanicKeyStatus();
+                    showMessageBox(`Panic Key ${isPanicKeyEnabled ? 'Enabled' : 'Disabled'}! Settings Saved.`);
+                });
+            }
+
+            if (launchBlankButton) {
+                launchBlankButton.addEventListener('click', launchSiteInAboutBlank);
+            }
+
+            if (homeLink) {
+                homeLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.location.assign(window.location.origin + '/index.html');
+                });
+            }
+
+            document.addEventListener('keydown', (e) => {
+                const currentPanicKey = localStorage.getItem('verdantPanicKey') || '';
+                const currentRedirectUrl = localStorage.getItem('verdantRedirectUrl') || 'https://google.com';
+                const currentIsPanicKeyEnabled = (localStorage.getItem('verdantPanicKeyEnabled') === 'true');
+
+                if (currentIsPanicKeyEnabled && currentPanicKey && e.key.toLowerCase() === currentPanicKey.toLowerCase()) {
+                    e.preventDefault();
+                    if (currentRedirectUrl) {
+                        window.location.replace(currentRedirectUrl);
+                    } else {
+                        console.warn("Panic key pressed but no redirect URL set in localStorage.");
+                    }
+                }
+            });
+        });
+    </script>
+
 </body>
 </html>
-
