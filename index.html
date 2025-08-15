@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verdant</title>
-        <link rel="icon" href="https://ik.imagekit.io/7krb4a8ap/76deab65-6483-4a91-8645-48ba0a4d5e82-removebg-preview.png" sizes="144x144">
+    <link rel="icon" href="https://ik.imagekit.io/7krb4a8ap/76deab65-6483-4a91-8645-48ba0a4d5e82-removebg-preview.png" sizes="144x144">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
@@ -289,222 +289,7 @@
     </div>
 
     <script>
-        function encodeBase64(str) {
-            try {
-                return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
-                    function toSolidBytes(match, p1) {
-                        return String.fromCharCode('0x' + p1);
-                    }));
-            } catch (e) {
-                console.error("Base64 encoding failed:", e);
-                return btoa(str);
-            }
-        }
-
-        function decodeBase64(str) {
-            try {
-                return decodeURIComponent(atob(str).split('').map(function(c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-            } catch (e) {
-                console.error("Base64 decoding failed:", e);
-                return null;
-            }
-        }
-
-        async function proxyLoad(url, frame, loadingOverlay) {
-            if (loadingOverlay) loadingOverlay.style.display = 'flex';
-
-            let actualTargetUrl = url;
-            const verdantProxyPrefix = window.location.origin + '/route/';
-
-            if (url.startsWith(verdantProxyPrefix)) {
-                const encodedPart = url.substring(verdantProxyPrefix.length);
-                const decodedUrl = decodeBase64(encodedPart);
-                if (decodedUrl) {
-                    actualTargetUrl = decodedUrl;
-                    console.log(`Detected Verdant proxy URL. Decoded to: ${actualTargetUrl}`);
-                } else {
-                    console.warn(`Could not decode Verdant proxy URL. Falling back to original input: ${url}`);
-                    actualTargetUrl = url;
-                }
-            } else {
-                actualTargetUrl = actualTargetUrl.replace(/^(https?:\/\/)?/, '');
-            }
-
-
-            const urlToFetch = actualTargetUrl.includes('.')
-                ? `https://${actualTargetUrl}`
-                : `https://html.duckduckgo.com/html?q=${encodeURIComponent(actualTargetUrl)}`;
-
-            const proxyChain = [
-                "https://corsproxy.io/?",
-                "https://api.allorigins.win/raw?url=",
-                "https://proxy.cors.sh/",
-                "https://yacdn.com/proxy/",
-                "https://api.codetabs.com/v1/proxy/?quest=",
-                "https://cors.eu.org/",
-                "https://cors.io/?",
-                "https://api.proxied.host/",
-                "https://crossorigin.me/",
-                "https://web.archive.org/web/",
-                "https://thingproxy.freeboard.io/fetch/",
-                "https://toothpaste.bekekes390.workers.dev/?url=",
-            ];
-
-            let response = null;
-            let lastError = "Unknown error, no proxy successfully fetched the content.";
-
-            for (let i = 0; i < proxyChain.length; i++) {
-                const currentProxyBase = proxyChain[i];
-                let currentProxyUrl = currentProxyBase + encodeURIComponent(urlToFetch);
-
-                console.log(`Attempting to fetch with proxy ${i + 1}: ${currentProxyUrl}`);
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 25000);
-
-                    response = await fetch(currentProxyUrl, { signal: controller.signal });
-                    clearTimeout(timeoutId);
-
-                    if (response.ok) {
-                        console.log(`Successfully fetched using proxy ${i + 1}.`);
-                        break;
-                    } else {
-                        lastError = `Proxy ${i + 1} failed with status ${response.status} ${response.statusText}.`;
-                        console.warn(lastError);
-                    }
-                } catch (e) {
-                    if (e.name === 'AbortError') {
-                        lastError = `Proxy ${i + 1} request timed out.`;
-                    } else {
-                        lastError = `Proxy ${i + 1} threw an error: ${e.message}.`;
-                    }
-                    console.error(lastError);
-                }
-            }
-
-            if (!response || !response.ok) {
-                throw new Error(`Failed to load content. All proxy attempts failed. Last detailed error: ${lastError}`);
-            }
-
-            try {
-                const html = await response.text();
-                const baseUrl = new URL(urlToFetch).origin;
-
-                const processed = html
-                    .replace(/<head>/i, `<head><base href="${baseUrl}/">`)
-                    .replace(/<body([^>]*)>/i, `<body$1 style="margin:0;">`);
-
-                const blob = new Blob([processed], { type: 'text/html' });
-                const blobUrl = URL.createObjectURL(blob);
-
-                console.log('Blob URL ready:', blobUrl);
-
-                frame.src = blobUrl;
-
-                updateUrlBar(actualTargetUrl);
-
-                frame.onload = () => {
-                    console.log('Frame loaded!');
-                    if (loadingOverlay) loadingOverlay.style.display = 'none';
-
-                    try {
-                        const iframeDoc = frame.contentDocument;
-                        if (iframeDoc && iframeDoc.body) {
-                            iframeDoc.body.addEventListener('click', (e) => {
-                                let targetElement = e.target;
-                                let urlToRedirect = '';
-                                let isHandled = false;
-
-                                while (targetElement && targetElement !== iframeDoc.body) {
-                                    if (targetElement.tagName === 'A' && targetElement.href) {
-                                        urlToRedirect = targetElement.href;
-                                        isHandled = true;
-                                        break;
-                                    }
-                                    if (targetElement.onclick || targetElement.hasAttribute('data-href') || targetElement.hasAttribute('data-url')) {
-                                        urlToRedirect = targetElement.getAttribute('data-href') || targetElement.getAttribute('data-url') || '';
-                                        if (!urlToRedirect && targetElement.onclick) {
-                                            const onclickString = targetElement.onclick.toString();
-                                            const match = /(?:location\.href|window\.location|location\.assign|window\.open)\s*=\s*['"]([^'"]+)['"]/.exec(onclickString);
-                                            if (match && match[1]) {
-                                                urlToRedirect = match[1];
-                                            }
-                                        }
-                                        if (urlToRedirect) {
-                                            isHandled = true;
-                                            break;
-                                        }
-                                    }
-                                    targetElement = targetElement.parentElement;
-                                }
-
-                                if (isHandled && urlToRedirect) {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-
-                                    try {
-                                        const absoluteUrl = new URL(urlToRedirect, new URL(frame.srcdoc ? frame.src : frame.src).origin).href;
-                                        console.log(`Intercepted navigation to: ${absoluteUrl}`);
-                                        proxyLoad(absoluteUrl, frame, loadingOverlay);
-                                    } catch (urlError) {
-                                        console.warn("Invalid URL for interception, attempting fallback:", urlToRedirect, urlError);
-                                        proxyLoad(urlToRedirect, frame, loadingOverlay);
-                                    }
-                                }
-                            }, true);
-
-                        }
-                    } catch (e) {
-                        console.warn('Frame access error (expected for cross-origin iframes when intercepting links):', e);
-                        console.warn('Internal navigation on some sites might not work automatically due to security restrictions.');
-                    }
-                };
-
-            } catch (error) {
-                console.error('Browser Error (during HTML processing/blob creation):', error);
-                frame.srcdoc = `
-                    <div style="color:white;text-align:center;font-size:20px;font-family:sans-serif;padding:50px;background-color:#333;">
-                        Error: Failed to load content.<br><br>
-                        This might be due to a proxy issue, or the target website being inaccessible.
-                        Please try a different URL or try again later.
-                        <br><br>
-                        Tip: For complex sites, internal links might not work automatically. Try copying the full URL and pasting it into the bar above.
-                    </div>
-                `;
-                if (loadingOverlay) loadingOverlay.style.display = 'none';
-                updateUrlBar('');
-            }
-        }
-
-        const homeLink = document.getElementById('home-link');
-        const searchInput = document.getElementById('search-input');
-        const proxyContentArea = document.getElementById('proxy-content-area');
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const mainTitle = document.querySelector('.main-title');
-        const searchBarContainer = document.querySelector('.search-bar-container');
-        const footerContainer = document.querySelector('.footer-container');
-        const personalGreeting = document.getElementById('personal-greeting');
-
-        const controlBar = document.getElementById('control-bar');
-        const backButton = document.getElementById('back-button');
-        const forwardButton = document.getElementById('forward-button');
-        const refreshButton = document.getElementById('refresh-button');
-        const urlBarInput = document.getElementById('url-bar-input');
-        const goButton = document.getElementById('go-button');
-        const minimizeButton = document.getElementById('minimize-button');
-
-        const nameModalOverlay = document.getElementById('name-modal-overlay');
-        const nameInput = document.getElementById('name-input');
-        const saveNameButton = document.getElementById('save-name-button');
-
-        function updateUrlBar(actualLoadedUrl) {
-            const verdantProxyPrefix = window.location.origin + '/route/';
-            const encodedUrl = encodeBase64(actualLoadedUrl);
-            urlBarInput.value = verdantProxyPrefix + encodedUrl;
-        }
-
+        // Helper function to update the personal greeting.
         function updatePersonalGreeting() {
             const userName = localStorage.getItem('userName');
             if (userName) {
@@ -516,13 +301,14 @@
             }
         }
 
+        // Resets the page to its initial state.
         function resetHomePage() {
             document.body.classList.remove('proxy-active');
             proxyContentArea.classList.add('hidden');
             controlBar.classList.add('hidden');
             searchInput.value = '';
-            updateUrlBar('');
-
+            urlBarInput.value = '';
+            
             mainTitle.style.display = '';
             searchBarContainer.style.display = '';
             footerContainer.style.display = '';
@@ -540,37 +326,86 @@
             }
         }
 
+        // Utility function to determine if a string is a valid URL.
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        // Processes the URL for the iframe src.
+        function processUrl(url) {
+            if (!isValidUrl(url)) {
+                return `https://www.google.com/search?q=${encodeURIComponent(url)}`;
+            }
+            // Add https:// if it's missing, but it's a valid URL format (e.g., 'example.com')
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                return `https://${url}`;
+            }
+            return url;
+        }
+
+        // New function to handle loading the URL into the iframe.
+        function loadUrl(url) {
+            if (!url) return;
+
+            // Apply the new UI state.
+            document.body.classList.add('proxy-active');
+            mainTitle.style.display = 'none';
+            personalGreeting.style.display = 'none';
+            searchBarContainer.style.display = 'none';
+            footerContainer.style.display = 'none';
+            proxyContentArea.classList.remove('hidden');
+            controlBar.classList.remove('hidden');
+
+            // Remove any existing iframe to start fresh.
+            let existingIframe = proxyContentArea.querySelector('iframe');
+            if (existingIframe) {
+                existingIframe.remove();
+            }
+
+            // Create and append the new iframe.
+            const newIframe = document.createElement('iframe');
+            newIframe.src = `/s/embed.html#${processUrl(url)}`;
+            proxyContentArea.appendChild(newIframe);
+            urlBarInput.value = url;
+
+            // Reset control bar state.
+            controlBar.classList.remove('minimized');
+            minimizeButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+            </svg>`;
+            minimizeButton.title = 'Minimize Control Bar';
+        }
+
+        const homeLink = document.getElementById('home-link');
+        const searchInput = document.getElementById('search-input');
+        const proxyContentArea = document.getElementById('proxy-content-area');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const mainTitle = document.querySelector('.main-title');
+        const searchBarContainer = document.querySelector('.search-bar-container');
+        const footerContainer = document.querySelector('.footer-container');
+        const personalGreeting = document.getElementById('personal-greeting');
+        
+        const controlBar = document.getElementById('control-bar');
+        const backButton = document.getElementById('back-button');
+        const forwardButton = document.getElementById('forward-button');
+        const refreshButton = document.getElementById('refresh-button');
+        const urlBarInput = document.getElementById('url-bar-input');
+        const goButton = document.getElementById('go-button');
+        const minimizeButton = document.getElementById('minimize-button');
+
+        const nameModalOverlay = document.getElementById('name-modal-overlay');
+        const nameInput = document.getElementById('name-input');
+        const saveNameButton = document.getElementById('save-name-button');
+
+        // Event listener for the main search input.
         searchInput.addEventListener('keypress', (event) => {
             if (event.key === 'Enter') {
-                const query = searchInput.value.trim();
-
-                if (query) {
-                    document.body.classList.add('proxy-active');
-
-                    mainTitle.style.display = 'none';
-                    personalGreeting.style.display = 'none';
-                    searchBarContainer.style.display = 'none';
-                    footerContainer.style.display = 'none';
-
-                    proxyContentArea.classList.remove('hidden');
-                    controlBar.classList.remove('hidden');
-
-                    controlBar.classList.remove('minimized');
-                    minimizeButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
-                    </svg>`;
-                    minimizeButton.title = 'Minimize Control Bar';
-
-                    let existingIframe = proxyContentArea.querySelector('iframe');
-                    if (existingIframe) {
-                        existingIframe.remove();
-                    }
-
-                    const newIframe = document.createElement('iframe');
-                    proxyContentArea.appendChild(newIframe);
-
-                    proxyLoad(query, newIframe, loadingOverlay);
-                }
+                loadUrl(searchInput.value.trim());
             }
         });
 
@@ -582,57 +417,33 @@
         backButton.addEventListener('click', () => {
             const currentIframe = proxyContentArea.querySelector('iframe');
             if (currentIframe && currentIframe.contentWindow) {
-                try {
-                    currentIframe.contentWindow.history.back();
-                } catch (e) {
-                     console.warn("Could not go back in iframe history (likely due to same-origin policy):", e);
-                }
+                currentIframe.contentWindow.history.back();
             }
         });
 
         forwardButton.addEventListener('click', () => {
             const currentIframe = proxyContentArea.querySelector('iframe');
             if (currentIframe && currentIframe.contentWindow) {
-                try {
-                    currentIframe.contentWindow.history.forward();
-                } catch (e) {
-                     console.warn("Could not go forward in iframe history (likely due to same-origin policy):", e);
-                }
+                currentIframe.contentWindow.history.forward();
             }
         });
 
         refreshButton.addEventListener('click', () => {
             const currentIframe = proxyContentArea.querySelector('iframe');
-            if (currentIframe && currentIframe.contentWindow) {
-                try {
-                    const currentVerdantUrl = urlBarInput.value;
-                    proxyLoad(currentVerdantUrl, currentIframe, loadingOverlay);
-                } catch (e) {
-                     console.warn("Could not refresh iframe (likely due to same-origin policy):", e);
-                }
+            if (currentIframe) {
+                currentIframe.contentWindow.location.reload();
             }
         });
 
-        function handleUrlBarNavigation() {
-            const newUrl = urlBarInput.value.trim();
-            if (newUrl) {
-                const currentIframe = proxyContentArea.querySelector('iframe');
-                if (currentIframe) {
-                    proxyLoad(newUrl, currentIframe, loadingOverlay);
-                } else {
-                    document.body.classList.add('proxy-active');
-                    proxyContentArea.classList.remove('hidden');
-                    controlBar.classList.remove('hidden');
-                    const newIframe = document.createElement('iframe');
-                    proxyContentArea.appendChild(newIframe);
-                    proxyLoad(newUrl, newIframe, loadingOverlay);
-                }
-            }
-        }
-        goButton.addEventListener('click', handleUrlBarNavigation);
+        // Event listener for the go button in the control bar.
+        goButton.addEventListener('click', () => {
+            loadUrl(urlBarInput.value.trim());
+        });
+
+        // Event listener for the URL bar input.
         urlBarInput.addEventListener('keypress', (event) => {
             if (event.key === 'Enter') {
-                handleUrlBarNavigation();
+                loadUrl(urlBarInput.value.trim());
             }
         });
 
@@ -676,167 +487,7 @@
             } else {
                 updatePersonalGreeting();
             }
-
-            const path = window.location.pathname;
-            const verdantProxyPrefixPath = '/route/';
-            if (path.startsWith(verdantProxyPrefixPath)) {
-                const encodedUrl = path.substring(verdantProxyPrefixPath.length);
-                const decodedUrl = decodeBase64(encodedUrl);
-                if (decodedUrl) {
-                    document.body.classList.add('proxy-active');
-                    proxyContentArea.classList.remove('hidden');
-                    controlBar.classList.remove('hidden');
-                    const newIframe = document.createElement('iframe');
-                    proxyContentArea.appendChild(newIframe);
-                    proxyLoad(decodedUrl, newIframe, loadingOverlay);
-                }
-            }
         });
     </script>
-    <div id="message-box-overlay" class="message-box-overlay hidden">
-        <div class="message-box-content">
-            <p id="message-box-text"></p>
-            <button id="message-box-ok">OK</button>
-        </div>
-    </div>
-
-    <script>
-        function showMessageBox(message) {
-            const messageBoxOverlay = document.getElementById('message-box-overlay');
-            const messageBoxText = document.getElementById('message-box-text');
-            const messageBoxOkButton = document.getElementById('message-box-ok');
-
-            if (!messageBoxOverlay || !messageBoxText || !messageBoxOkButton) {
-                console.error("Message box elements not found. Please ensure #message-box-overlay, #message-box-text, and #message-box-ok exist in your HTML if you want messages to display.");
-                return;
-            }
-
-            messageBoxText.textContent = message;
-            messageBoxOverlay.classList.remove('hidden');
-
-            const hideMessageBox = () => {
-                messageBoxOverlay.classList.add('hidden');
-                messageBoxOkButton.removeEventListener('click', hideMessageBox);
-            };
-
-            messageBoxOkButton.addEventListener('click', hideMessageBox);
-        }
-
-        function launchSiteInAboutBlank() {
-            const siteURL = window.location.origin + '/index.html';
-            const newTab = window.open('about:blank', '_blank');
-
-            if (newTab) {
-                newTab.opener = null;
-                const content = `
-                    <html>
-                    <head>
-                        <title>about:blank</title>
-                        <style>
-                            body { margin:0; padding:0; overflow:hidden; }
-                            iframe { border:none; width:100vw; height:100vh; }
-                        </style>
-                    </head>
-                    <body>
-                        <iframe src="${siteURL}"></iframe>
-                    </body>
-                    </html>`;
-                newTab.document.write(content);
-                newTab.document.close();
-            } else {
-                showMessageBox("Please allow pop-ups for this site to launch in about:blank.");
-                console.error("Pop-up blocked: Unable to launch in about:blank.");
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const launchBlankButton = document.getElementById('launch-blank-button');
-            const homeLink = document.getElementById('home-link');
-            const panicKeyInput = document.getElementById('panic-key-input');
-            const redirectUrlInput = document.getElementById('redirect-url-input');
-            const togglePanicKeyButton = document.getElementById('toggle-panic-key-button');
-            const panicKeyStatus = document.getElementById('panic-key-status');
-
-            let storedPanicKey = localStorage.getItem('verdantPanicKey') || '';
-            let storedRedirectUrl = localStorage.getItem('verdantRedirectUrl') || 'https://google.com';
-            let isPanicKeyEnabled = (localStorage.getItem('verdantPanicKeyEnabled') === 'true');
-
-            function updatePanicKeyStatus() {
-                if (panicKeyStatus) {
-                    if (isPanicKeyEnabled) {
-                        panicKeyStatus.textContent = `Panic Key: Enabled (Key: '${storedPanicKey || 'Not Set'}', Redirect: '${storedRedirectUrl}')`;
-                        panicKeyStatus.classList.remove('text-red-400');
-                        panicKeyStatus.classList.add('text-emerald-400');
-                    } else {
-                        panicKeyStatus.textContent = `Panic Key: Disabled`;
-                        panicKeyStatus.classList.remove('text-emerald-400');
-                        panicKeyStatus.classList.add('text-red-400');
-                    }
-                }
-            }
-
-            if (panicKeyInput) {
-                panicKeyInput.value = storedPanicKey;
-                panicKeyInput.addEventListener('keydown', (e) => {
-                    e.preventDefault();
-                    panicKeyInput.value = e.key;
-                    storedPanicKey = e.key;
-                    showMessageBox(`Panic key set to: '${e.key}'`);
-                });
-            }
-            if (redirectUrlInput) {
-                redirectUrlInput.value = storedRedirectUrl;
-            }
-            updatePanicKeyStatus();
-
-            if (togglePanicKeyButton) {
-                togglePanicKeyButton.addEventListener('click', () => {
-                    storedPanicKey = panicKeyInput ? panicKeyInput.value.trim() : localStorage.getItem('verdantPanicKey') || '';
-                    storedRedirectUrl = redirectUrlInput ? redirectUrlInput.value.trim() : localStorage.getItem('verdantRedirectUrl') || 'https://google.com';
-
-                    if (storedRedirectUrl && !storedRedirectUrl.startsWith('http://') && !storedRedirectUrl.startsWith('https://')) {
-                        showMessageBox("Please enter a valid URL (e.g., https://google.com).");
-                        return;
-                    }
-
-                    isPanicKeyEnabled = !isPanicKeyEnabled;
-
-                    localStorage.setItem('verdantPanicKey', storedPanicKey);
-                    localStorage.setItem('verdantRedirectUrl', storedRedirectUrl);
-                    localStorage.setItem('verdantPanicKeyEnabled', isPanicKeyEnabled);
-
-                    updatePanicKeyStatus();
-                    showMessageBox(`Panic Key ${isPanicKeyEnabled ? 'Enabled' : 'Disabled'}! Settings Saved.`);
-                });
-            }
-
-            if (launchBlankButton) {
-                launchBlankButton.addEventListener('click', launchSiteInAboutBlank);
-            }
-
-            if (homeLink) {
-                homeLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    window.location.assign(window.location.origin + '/index.html');
-                });
-            }
-
-            document.addEventListener('keydown', (e) => {
-                const currentPanicKey = localStorage.getItem('verdantPanicKey') || '';
-                const currentRedirectUrl = localStorage.getItem('verdantRedirectUrl') || 'https://google.com';
-                const currentIsPanicKeyEnabled = (localStorage.getItem('verdantPanicKeyEnabled') === 'true');
-
-                if (currentIsPanicKeyEnabled && currentPanicKey && e.key.toLowerCase() === currentPanicKey.toLowerCase()) {
-                    e.preventDefault();
-                    if (currentRedirectUrl) {
-                        window.location.replace(currentRedirectUrl);
-                    } else {
-                        console.warn("Panic key pressed but no redirect URL set in localStorage.");
-                    }
-                }
-            });
-        });
-    </script>
-
 </body>
 </html>
